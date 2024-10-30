@@ -116,7 +116,8 @@ public class UserInterface {
         Iterator<Client> clients = warehouse.getClients();
         System.out.println("\nClients:");
         while (clients.hasNext()) {
-            System.out.println(clients.next());
+            Client client = clients.next();
+            System.out.println(client);
         }
     }
 
@@ -124,7 +125,8 @@ public class UserInterface {
         Iterator<Product> products = warehouse.getProducts();
         System.out.println("\nProducts:");
         while (products.hasNext()) {
-            System.out.println(products.next());
+            Product product = products.next();
+            System.out.println(product);
         }
     }
 
@@ -139,14 +141,14 @@ public class UserInterface {
 
     public void placeOrder() {
         String clientID = getToken("Enter client ID");
-        String result = warehouse.placeOrder(clientID);
+        String result = warehouse.processClientOrder(clientID); // Matches the processClientOrder method in ClientList
         System.out.println(result);
     }
 
     public void receivePayment() {
         String clientID = getToken("Enter client ID");
-        double amount = Double.parseDouble(getToken("Enter payment amount"));
-        String result = warehouse.receivePayment(clientID, amount);
+        float amount = Float.parseFloat(getToken("Enter payment amount"));
+        String result = warehouse.receivePayment(clientID, amount); // Assuming receivePayment is handled similarly
         System.out.println(result);
     }
 
