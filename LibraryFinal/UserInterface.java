@@ -1,367 +1,234 @@
 import java.util.*;
-import java.text.*;
 import java.io.*;
+
 public class UserInterface {
-  private static UserInterface userInterface;
-  private BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-  private static Library library;
-  private static final int EXIT = 0;
-  private static final int ADD_MEMBER = 1;
-  private static final int ADD_BOOKS = 2;
-  private static final int ISSUE_BOOKS = 3;
-  private static final int RETURN_BOOKS = 4;
-  private static final int RENEW_BOOKS = 5;
-  private static final int REMOVE_BOOKS = 6;
-  private static final int PLACE_HOLD = 7;
-  private static final int REMOVE_HOLD = 8;
-  private static final int PROCESS_HOLD = 9;
-  private static final int GET_TRANSACTIONS = 10;
-  private static final int SAVE = 11;
-  private static final int RETRIEVE = 12;
-  private static final int HELP = 13;
-  private UserInterface() {
-    if (yesOrNo("Look for saved data and  use it?")) {
-      retrieve();
-    } else {
-      library = Library.instance();
-    }
-  }
-  public static UserInterface instance() {
-    if (userInterface == null) {
-      return userInterface = new UserInterface();
-    } else {
-      return userInterface;
-    }
-  }
-  public String getToken(String prompt) {
-    do {
-      try {
-        System.out.println(prompt);
-        String line = reader.readLine();
-        StringTokenizer tokenizer = new StringTokenizer(line,"\n\r\f");
-        if (tokenizer.hasMoreTokens()) {
-          return tokenizer.nextToken();
-        }
-      } catch (IOException ioe) {
-        System.exit(0);
-      }
-    } while (true);
-  }
-  private boolean yesOrNo(String prompt) {
-    String more = getToken(prompt + " (Y|y)[es] or anything else for no");
-    if (more.charAt(0) != 'y' && more.charAt(0) != 'Y') {
-      return false;
-    }
-    return true;
-  }
-  public int getNumber(String prompt) {
-    do {
-      try {
-        String item = getToken(prompt);
-        Integer num = Integer.valueOf(item);
-        return num.intValue();
-      } catch (NumberFormatException nfe) {
-        System.out.println("Please input a number ");
-      }
-    } while (true);
-  }
-  public Calendar getDate(String prompt) {
-    do {
-      try {
-        Calendar date = new GregorianCalendar();
-        String item = getToken(prompt);
-        DateFormat df = SimpleDateFormat.getDateInstance(DateFormat.SHORT);
-        date.setTime(df.parse(item));
-        return date;
-      } catch (Exception fe) {
-        System.out.println("Please input a date as mm/dd/yy");
-      }
-    } while (true);
-  }
-  public int getCommand() {
-    do {
-      try {
-        int value = Integer.parseInt(getToken("Enter command:" + HELP + " for help"));
-        if (value >= EXIT && value <= HELP) {
-          return value;
-        }
-      } catch (NumberFormatException nfe) {
-        System.out.println("Enter a number");
-      }
-    } while (true);
-  }
+    private static UserInterface userInterface;
+    private BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+    private static Warehouse warehouse;
+    private static final int EXIT = 0;
+    private static final int ADD_CLIENT = 1;
+    private static final int ADD_PRODUCT = 2;
+    private static final int VIEW_CLIENTS = 3;
+    private static final int VIEW_PRODUCTS = 4;
+    private static final int ADD_TO_WISHLIST = 5;
+    private static final int PLACE_ORDER = 6;
+    private static final int RECEIVE_PAYMENT = 7;
+    private static final int RECEIVE_SHIPMENT = 8;
+    private static final int VIEW_INVOICES = 9;
+    private static final int SAVE = 10;
+    private static final int RETRIEVE = 11;
+    private static final int HELP = 12;
 
-  public void help() {
-    System.out.println("Enter a number between 0 and 12 as explained below:");
-    System.out.println(EXIT + " to Exit\n");
-    System.out.println(ADD_MEMBER + " to add a member");
-    System.out.println(ADD_BOOKS + " to  add books");
-    System.out.println(ISSUE_BOOKS + " to  issue books to a  member");
-    System.out.println(RETURN_BOOKS + " to  return books ");
-    System.out.println(RENEW_BOOKS + " to  renew books ");
-    System.out.println(REMOVE_BOOKS + " to  remove books");
-    System.out.println(PLACE_HOLD + " to  place a hold on a book");
-    System.out.println(REMOVE_HOLD + " to  remove a hold on a book");
-    System.out.println(PROCESS_HOLD + " to  process holds");
-    System.out.println(GET_TRANSACTIONS + " to  print transactions");
-    System.out.println(SAVE + " to  save data");
-    System.out.println(RETRIEVE + " to  retrieve");
-    System.out.println(HELP + " for help");
-  }
-
-  public void addMember() {
-    String name = getToken("Enter member name");
-    String address = getToken("Enter address");
-    String phone = getToken("Enter phone");
-    Member result;
-    result = library.addMember(name, address, phone);
-    if (result == null) {
-      System.out.println("Could not add member");
-    }
-    System.out.println(result);
-  }
-
-  public void addBooks() {
-    Book result;
-    do {
-      String title = getToken("Enter  title");
-      String bookID = getToken("Enter id");
-      String author = getToken("Enter author");
-      result = library.addBook(title, author, bookID);
-      if (result != null) {
-        System.out.println(result);
-      } else {
-        System.out.println("Book could not be added");
-      }
-      if (!yesOrNo("Add more books?")) {
-        break;
-      }
-    } while (true);
-  }
-  public void issueBooks() {
-    Book result;
-    String memberID = getToken("Enter member id");
-    if (library.searchMembership(memberID) == null) {
-      System.out.println("No such member");
-      return;
-    }
-    do {
-      String bookID = getToken("Enter book id");
-      result = library.issueBook(memberID, bookID);
-      if (result != null){
-        System.out.println(result.getTitle()+ "   " +  result.getDueDate());
-      } else {
-          System.out.println("Book could not be issued");
-      }
-      if (!yesOrNo("Issue more books?")) {
-        break;
-      }
-    } while (true);
-  }
-  public void renewBooks() {
-    Book result;
-    String memberID = getToken("Enter member id");
-    if (library.searchMembership(memberID) == null) {
-      System.out.println("No such member");
-      return;
-    }
-    Iterator issuedBooks = library.getBooks(memberID);
-    while (issuedBooks.hasNext()){
-      Book book = (Book)(issuedBooks.next());
-      if (yesOrNo(book.getTitle())) {
-        result = library.renewBook(book.getId(), memberID);
-        if (result != null){
-          System.out.println(result.getTitle()+ "   " + result.getDueDate());
+    private UserInterface() {
+        if (yesOrNo("Look for saved data and use it?")) {
+            retrieve();
         } else {
-          System.out.println("Book is not renewable");
+            warehouse = Warehouse.instance();
         }
-      }
     }
-  }
-  public void returnBooks() {
-    int result;
-    do {
-      String bookID = getToken("Enter book id");
-      result = library.returnBook(bookID);
-      switch(result) {
-        case Library.BOOK_NOT_FOUND:
-          System.out.println("No such Book in Library");
-          break;
-        case Library.BOOK_NOT_ISSUED:
-          System.out.println(" Book  was not checked out");
-          break;
-        case Library.BOOK_HAS_HOLD:
-          System.out.println("Book has a hold");
-          break;
-        case Library.OPERATION_FAILED:
-          System.out.println("Book could not be returned");
-          break;
-        case Library.OPERATION_COMPLETED:
-          System.out.println(" Book has been returned");
-          break;
-        default:
-          System.out.println("An error has occurred");
-      }
-      if (!yesOrNo("Return more books?")) {
-        break;
-      }
-    } while (true);
-  }
-  public void removeBooks() {
-    int result;
-    do {
-      String bookID = getToken("Enter book id");
-      result = library.removeBook(bookID);
-      switch(result){
-        case Library.BOOK_NOT_FOUND:
-          System.out.println("No such Book in Library");
-          break;
-        case Library.BOOK_ISSUED:
-          System.out.println(" Book is currently checked out");
-          break;
-        case Library.BOOK_HAS_HOLD:
-          System.out.println("Book has a hold");
-          break;
-        case Library.OPERATION_FAILED:
-          System.out.println("Book could not be removed");
-          break;
-        case Library.OPERATION_COMPLETED:
-          System.out.println(" Book has been removed");
-          break;
-        default:
-          System.out.println("An error has occurred");
-      }
-      if (!yesOrNo("Remove more books?")) {
-        break;
-      }
-    } while (true);
-  }
-  public void placeHold() {
-    String memberID = getToken("Enter member id");
-    String bookID = getToken("Enter book id");
-    int duration = getNumber("Enter duration of hold");
-    int result = library.placeHold(memberID, bookID, duration);
-    switch(result){
-      case Library.BOOK_NOT_FOUND:
-        System.out.println("No such Book in Library");
-        break;
-      case Library.BOOK_NOT_ISSUED:
-        System.out.println(" Book is not checked out");
-        break;
-      case Library.NO_SUCH_MEMBER:
-        System.out.println("Not a valid member ID");
-        break;
-      case Library.HOLD_PLACED:
-        System.out.println("A hold has been placed");
-        break;
-      default:
-        System.out.println("An error has occurred");
+
+    public static UserInterface instance() {
+        if (userInterface == null) {
+            return userInterface = new UserInterface();
+        } else {
+            return userInterface;
+        }
     }
-  }
-  public void removeHold() {
-    String memberID = getToken("Enter member id");
-    String bookID = getToken("Enter book id");
-    int result = library.removeHold(memberID, bookID);
-    switch(result){
-      case Library.BOOK_NOT_FOUND:
-        System.out.println("No such Book in Library");
-        break;
-      case Library.NO_SUCH_MEMBER:
-        System.out.println("Not a valid member ID");
-        break;
-      case Library.OPERATION_COMPLETED:
-        System.out.println("The hold has been removed");
-        break;
-      default:
-        System.out.println("An error has occurred");
+
+    public String getToken(String prompt) {
+        do {
+            try {
+                System.out.println(prompt);
+                String line = reader.readLine();
+                StringTokenizer tokenizer = new StringTokenizer(line, "\n\r\f");
+                if (tokenizer.hasMoreTokens()) {
+                    return tokenizer.nextToken();
+                }
+            } catch (IOException ioe) {
+                System.exit(0);
+            }
+        } while (true);
     }
-  }
-  public void processHolds() {
-    Member result;
-    do {
-      String bookID = getToken("Enter book id");
-      result = library.processHold(bookID);
-      if (result != null) {
+
+    private boolean yesOrNo(String prompt) {
+        String more = getToken(prompt + " (Y|y)[es] or anything else for no");
+        return more.charAt(0) == 'y' || more.charAt(0) == 'Y';
+    }
+
+    public int getNumber(String prompt) {
+        do {
+            try {
+                String item = getToken(prompt);
+                return Integer.parseInt(item);
+            } catch (NumberFormatException nfe) {
+                System.out.println("Please input a number.");
+            }
+        } while (true);
+    }
+
+    public void help() {
+        System.out.println("Enter a number between 0 and 12 as explained below:");
+        System.out.println(EXIT + " to Exit\n");
+        System.out.println(ADD_CLIENT + " to add a client");
+        System.out.println(ADD_PRODUCT + " to add a product");
+        System.out.println(VIEW_CLIENTS + " to view all clients");
+        System.out.println(VIEW_PRODUCTS + " to view all products");
+        System.out.println(ADD_TO_WISHLIST + " to add products to a client's wishlist");
+        System.out.println(PLACE_ORDER + " to place an order for a client");
+        System.out.println(RECEIVE_PAYMENT + " to record a payment for a client");
+        System.out.println(RECEIVE_SHIPMENT + " to receive a product shipment");
+        System.out.println(VIEW_INVOICES + " to view all invoices for a client");
+        System.out.println(SAVE + " to save data");
+        System.out.println(RETRIEVE + " to retrieve data");
+        System.out.println(HELP + " for help");
+    }
+
+    public void addClient() {
+        String firstName = getToken("Enter client first name");
+        String lastName = getToken("Enter client last name");
+        String address = getToken("Enter client address");
+        String phone = getToken("Enter client phone");
+        String clientID = IdServer.instance().getClientId();
+
+        Client client = warehouse.addClient(clientID, firstName, lastName, address, phone);
+        if (client == null) {
+            System.out.println("Could not add client.");
+        } else {
+            System.out.println("Client added: " + client);
+        }
+    }
+
+    public void addProduct() {
+        String name = getToken("Enter product name");
+        double price = Double.parseDouble(getToken("Enter product price"));
+        int quantity = Integer.parseInt(getToken("Enter product quantity"));
+        String productID = IdServer.instance().getProductId();
+
+        Product product = warehouse.addProduct(name, productID, price, quantity);
+        if (product == null) {
+            System.out.println("Could not add product.");
+        } else {
+            System.out.println("Product added: " + product);
+        }
+    }
+
+    public void viewClients() {
+        Iterator<Client> clients = warehouse.getClients();
+        System.out.println("\nClients:");
+        while (clients.hasNext()) {
+            System.out.println(clients.next());
+        }
+    }
+
+    public void viewProducts() {
+        Iterator<Product> products = warehouse.getProducts();
+        System.out.println("\nProducts:");
+        while (products.hasNext()) {
+            System.out.println(products.next());
+        }
+    }
+
+    public void addToWishlist() {
+        String clientID = getToken("Enter client ID");
+        String productID = getToken("Enter product ID");
+        int quantity = getNumber("Enter quantity");
+
+        String result = warehouse.addToWishList(clientID, productID, quantity);
         System.out.println(result);
-      } else {
-        System.out.println("No valid holds left");
-      }
-      if (!yesOrNo("Process more books?")) {
-        break;
-      }
-    } while (true);
-  }
-  public void getTransactions() {
-    Iterator result;
-    String memberID = getToken("Enter member id");
-    Calendar date  = getDate("Please enter the date for which you want records as mm/dd/yy");
-    result = library.getTransactions(memberID,date);
-    if (result == null) {
-      System.out.println("Invalid Member ID");
-    } else {
-      while(result.hasNext()) {
-        Transaction transaction = (Transaction) result.next();
-        System.out.println(transaction.getType() + "   "   + transaction.getTitle() + "\n");
-      }
-      System.out.println("\n  There are no more transactions \n" );
     }
-  }
-  private void save() {
-    if (library.save()) {
-      System.out.println(" The library has been successfully saved in the file LibraryData \n" );
-    } else {
-      System.out.println(" There has been an error in saving \n" );
+
+    public void placeOrder() {
+        String clientID = getToken("Enter client ID");
+        String result = warehouse.placeOrder(clientID);
+        System.out.println(result);
     }
-  }
-  private void retrieve() {
-    try {
-      Library tempLibrary = Library.retrieve();
-      if (tempLibrary != null) {
-        System.out.println(" The library has been successfully retrieved from the file LibraryData \n" );
-        library = tempLibrary;
-      } else {
-        System.out.println("File doesnt exist; creating new library" );
-        library = Library.instance();
-      }
-    } catch(Exception cnfe) {
-      cnfe.printStackTrace();
+
+    public void receivePayment() {
+        String clientID = getToken("Enter client ID");
+        double amount = Double.parseDouble(getToken("Enter payment amount"));
+        String result = warehouse.receivePayment(clientID, amount);
+        System.out.println(result);
     }
-  }
-  public void process() {
-    int command;
-    help();
-    while ((command = getCommand()) != EXIT) {
-      switch (command) {
-        case ADD_MEMBER:        addMember();
-                                break;
-        case ADD_BOOKS:         addBooks();
-                                break;
-        case ISSUE_BOOKS:       issueBooks();
-                                break;
-        case RETURN_BOOKS:      returnBooks();
-                                break;
-        case REMOVE_BOOKS:      removeBooks();
-                                break;
-        case RENEW_BOOKS:       renewBooks();
-                                break;
-        case PLACE_HOLD:        placeHold();
-                                break;
-        case REMOVE_HOLD:       removeHold();
-                                break;
-        case PROCESS_HOLD:      processHolds();
-                                break;
-        case GET_TRANSACTIONS:  getTransactions();
-                                break;
-        case SAVE:              save();
-                                break;
-        case RETRIEVE:          retrieve();
-                                break;
-        case HELP:              help();
-                                break;
-      }
+
+    public void receiveShipment() {
+        String productID = getToken("Enter product ID");
+        int quantity = getNumber("Enter shipment quantity");
+        String result = warehouse.receiveShipment(productID, quantity);
+        System.out.println(result);
     }
-  }
-  public static void main(String[] s) {
-    UserInterface.instance().process();
-  }
+
+    public void viewInvoices() {
+        String clientID = getToken("Enter client ID");
+        warehouse.printInvoices(clientID);
+    }
+
+    private void save() {
+        if (warehouse.save()) {
+            System.out.println("The warehouse has been successfully saved.");
+        } else {
+            System.out.println("There was an error saving the warehouse.");
+        }
+    }
+
+    private void retrieve() {
+        Warehouse tempWarehouse = Warehouse.retrieve();
+        if (tempWarehouse != null) {
+            warehouse = tempWarehouse;
+            System.out.println("The warehouse has been successfully retrieved.");
+        } else {
+            System.out.println("No saved warehouse data found. Starting fresh.");
+            warehouse = Warehouse.instance();
+        }
+    }
+
+    public void process() {
+        int command;
+        help();
+        while ((command = getCommand()) != EXIT) {
+            switch (command) {
+                case ADD_CLIENT:
+                    addClient();
+                    break;
+                case ADD_PRODUCT:
+                    addProduct();
+                    break;
+                case VIEW_CLIENTS:
+                    viewClients();
+                    break;
+                case VIEW_PRODUCTS:
+                    viewProducts();
+                    break;
+                case ADD_TO_WISHLIST:
+                    addToWishlist();
+                    break;
+                case PLACE_ORDER:
+                    placeOrder();
+                    break;
+                case RECEIVE_PAYMENT:
+                    receivePayment();
+                    break;
+                case RECEIVE_SHIPMENT:
+                    receiveShipment();
+                    break;
+                case VIEW_INVOICES:
+                    viewInvoices();
+                    break;
+                case SAVE:
+                    save();
+                    break;
+                case RETRIEVE:
+                    retrieve();
+                    break;
+                case HELP:
+                    help();
+                    break;
+                default:
+                    System.out.println("Invalid command. Try again.");
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        UserInterface.instance().process();
+    }
 }
